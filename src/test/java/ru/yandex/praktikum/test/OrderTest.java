@@ -7,14 +7,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 import ru.yandex.praktikum.pageobject.OrderPage;
 
-import java.time.Duration;
 
 //Создадим класс с параметрическим записком.
 @RunWith(Parameterized.class)
@@ -78,17 +72,11 @@ public class OrderTest extends ParentTest {
         orderPage.clickOrderButton();
         //Третия страница
         orderPage.clickYesOrderButton();
-        // ===== ВАЖНО: скипаем проверку модалки в Chrome (в задании заявлен баг) =====
-        String browserName = ((RemoteWebDriver) driver).getCapabilities().getBrowserName();
-        if ("chrome".equalsIgnoreCase(browserName)) {
-            System.out.println("Skip success modal check in Chrome due to known bug from the task.");
-            return; // никаких ожиданий/ассертов дальше
-        }
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        WebElement confirmation = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[contains(text(), 'Заказ оформлен')]"))
+
+
+        Assert.assertTrue(
+                "Не найдено сообщение об успешном оформлении заказа для клиента " + name + " " + lastName,
+                orderPage.isSuccessfulOrderWindowDisplayed()
         );
-        Assert.assertTrue("Не найдено сообщение об успешном оформлении заказа для клиента " + name + " " + lastName,
-                confirmation.isDisplayed());
     }
 }

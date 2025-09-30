@@ -2,6 +2,10 @@ package ru.yandex.praktikum.pageobject;
 //Описание элементов и методов нужных для проведения позитивных тестов из сценария OrderTest.
 
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
 
 public class OrderPage {
     //Нужны элементы страницы.
@@ -35,6 +39,22 @@ public class OrderPage {
     //Кнопка да потвердить заказ на третьем экране.
     private  static final By YES_ORDER_BUTTON = By.xpath("//button[@class = 'Button_Button__ra12g Button_Middle__1CSJM' and text() = 'Да']");
 
+    // вспомогательный локатор появления любого списка станций метро
+    private static final By ANY_METRO_OPTION_LIST =
+            By.xpath("//*[contains(@class,'select-search__option') or contains(@class,'select-search__options')]");
+
+    // ====== Шаблоны динамических локаторов ======
+    private static final String METRO_OPTION_XPATH_TPL     = "//button[.//div[normalize-space(text())='%s']]";
+    private static final String DROPDOWN_OPTION_XPATH_TPL  = "//div[@class='Dropdown-option' and text()='%s']";
+
+    // ====== Билдеры динамических локаторов ======
+    private By metroOption(String name) {
+        return By.xpath(String.format(METRO_OPTION_XPATH_TPL, name));
+    }
+    private By dropdownOption(String text) {
+        return By.xpath(String.format(DROPDOWN_OPTION_XPATH_TPL, text));
+    }
+
     private final WebDriver driver;
     //Конструктор объекта OrderPage с методами страницы,трех экранов и сообщение об успешном заказе.
     public OrderPage(WebDriver driver) {
@@ -60,17 +80,12 @@ public class OrderPage {
         input.clear();
         input.sendKeys(metroStation);
 
-        // дождаться появления списка вариантов
-        By anyOptionList = By.xpath("//*[contains(@class,'select-search__option') or contains(@class,'select-search__options')]");
-        new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(5))
-                .until(org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated(anyOptionList));
+        new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.presenceOfElementLocated(ANY_METRO_OPTION_LIST));
 
-        // кликнуть ровно нужную станцию
-        By exactOption = By.xpath("//button[.//div[normalize-space(text())='" + metroStation + "']]");
-        WebElement option = new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(5))
-                .until(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(exactOption));
+        WebElement option = new WebDriverWait(driver, Duration.ofSeconds(5))
+                .until(ExpectedConditions.elementToBeClickable(metroOption(metroStation)));
 
-        // на всякий — прокрутка к опции, затем клик
         ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", option);
         option.click();
     }
@@ -91,7 +106,7 @@ public class OrderPage {
     //Ввод срока аренды
     public void enterPeriod(String period) {
         driver.findElement(PERIOD_FIELD).click();
-        driver.findElement(By.xpath("//div[@class = 'Dropdown-option' and text() = '" + period + "']")).click();
+        driver.findElement(dropdownOption(period)).click();
     }
 
     //Выбор цвета
@@ -124,7 +139,7 @@ public class OrderPage {
 
     //Метод проверки появилось ли окно подтверждения заказа.
     public boolean isSuccessfulOrderWindowDisplayed() {
-        return new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(5))
+        return new WebDriverWait(driver, Duration.ofSeconds(5))
                 .until(d -> !d.findElements(ORDER_PLACES).isEmpty());
     }
 }

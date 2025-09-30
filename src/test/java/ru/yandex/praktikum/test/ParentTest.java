@@ -48,7 +48,7 @@ public abstract class ParentTest {
             // короткий фолбэк на редкий сетевой сброс
             driver.navigate().to("https://qa-scooter.praktikum-services.ru");
         }
-        mainPage.AcceptCookies();
+        mainPage.acceptCookies();
     }
 
     @After

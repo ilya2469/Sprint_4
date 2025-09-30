@@ -39,21 +39,21 @@ public class QuestionTest extends ParentTest {
     //Проверим, что текст вопросов соответствует ожидаемым
     @Test
     public void expandAccordionQuestionDisplayedQuestionValid() {
-        Assert.assertEquals("Ожидаем что блок ответа скрыт для вопроса №" + position, question, mainPage.isQuestionTextDisplayed(position));
+        Assert.assertEquals(question, mainPage.getQuestionText(position));
     }
     //Проверим, что до нажатия на карточку ответа нет
     @Test
     public void expandAccordionItemsNotClickItemCollapse() {
-        Assert.assertFalse("Ожидаем что блок ответа скрыт для вопроса №" + position, mainPage.isBlockAnswerTextDisplayed(position));
+        Assert.assertFalse(mainPage.isBlockAnswerTextDisplayed(position));
     }
     //Проверим, что при клике ответ появился на экране и соответствует ожидаемому.
     @Test
     public void expandAccordionItemsClickItemExpand() {
-        Assert.assertEquals("Ожидаем что текст ответа появился после клика и соответствует ожидаемому для вопроса №" + position, answer, mainPage.isAnswerTextDisplayed(position));
+        Assert.assertEquals(answer, mainPage.getAnswerText(position));
     }
     //Проверим, что на сайте нет еще вопросов которые мы забыли описать.
     @Test
     public void expandAccordionItemsDisplayedCountItemsValid() {
-        Assert.assertEquals("Число тестовых данных не совпадает с количеством вопросов на сайте. Проверь константу COUNT_ANSWER", COUNT_ANSWER, mainPage.qetQuestionsSize());
+        Assert.assertEquals(COUNT_ANSWER, mainPage.getQuestionsSize());
     }
 }

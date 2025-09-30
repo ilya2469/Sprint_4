@@ -6,6 +6,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
+import java.util.List;
 
 
 public class MainPage {
@@ -21,21 +22,38 @@ private static final By ORDER_HOME_BUTTON = By.xpath("//button[@class = 'Button_
 private static final By ACCORDION_ITEM = By.xpath("//div[@class = 'accordion__item']");
 //Кнопка принятия куки.
 private static final By ACCEPT_COOKIES = By.id("rcc-confirm-button");
+private static final By ACCORDION_BUTTON_IN_HEADING = By.cssSelector(".accordion__button");
+private static final String ACCORDION_HEADING_ID_TPL = "accordion__heading-%d";
+private static final String ACCORDION_PANEL_ID_TPL   = "accordion__panel-%d";
+
 private final WebDriver driver;
 
 public MainPage(WebDriver driver) {
     this.driver = driver;
 }
 
+    private By headingByIndex(int i) {
+        return By.id(String.format(ACCORDION_HEADING_ID_TPL, i));
+    }
+    private By panelByIndex(int i) {
+        return By.id(String.format(ACCORDION_PANEL_ID_TPL, i));
+    }
+
 //Открыть страницу и согласиться принять куки,что бы это окно не мешало.
 public void pageOpen() {
         driver.get(PAGE_URL);
-
+    new WebDriverWait(driver, Duration.ofSeconds(5)).until(
+            ExpectedConditions.or(
+                    ExpectedConditions.presenceOfElementLocated(ORDER_HOME_BUTTON),
+                    ExpectedConditions.presenceOfElementLocated(ORDER_HEADER_BUTTON),
+                    ExpectedConditions.presenceOfElementLocated(ACCEPT_COOKIES)
+            )
+    );
 }
 
 //Принять куки.
 
-public void AcceptCookies() {
+public void acceptCookies() {
     WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(8));
     try {
         WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(ACCEPT_COOKIES));
@@ -67,20 +85,23 @@ public void clickOrderButton(String entryPoint) {
 
 //Нажатие на заголовок FAQ, передав номер элемента FAQ.
 public void clickAccordionItemButton(int number_items) {
-    By heading = By.id("accordion__heading-" + number_items);
-    WebDriverWait w = new WebDriverWait(driver, java.time.Duration.ofSeconds(5));
-    WebElement h = w.until(org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated(heading));
-    ((org.openqa.selenium.JavascriptExecutor) driver)
-            .executeScript("arguments[0].scrollIntoView({block:'center'});", h);
-    w.until(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(h)).click();
+    By heading = headingByIndex(number_items);
+    WebDriverWait w = new WebDriverWait(driver, Duration.ofSeconds(5));
+    WebElement h = w.until(ExpectedConditions.presenceOfElementLocated(heading));
+    ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", h);
+    try {
+        w.until(ExpectedConditions.elementToBeClickable(h)).click();
+    } catch (ElementClickInterceptedException e) {
+        // если перекрыто картинкой → принудительный js-клик
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", h);
+    }
 }
 
 // Текст вопроса
-public String isQuestionTextDisplayed(int number_items) {
-    By heading = By.id("accordion__heading-" + number_items);
-    WebElement h = driver.findElement(heading);
-    // На большинстве стендов текст лежит в .accordion__button
-    java.util.List<WebElement> buttons = h.findElements(By.cssSelector(".accordion__button"));
+public String getQuestionText(int number_items) {
+    WebElement h = driver.findElement(headingByIndex(number_items));
+    List<WebElement> buttons = h.findElements(ACCORDION_BUTTON_IN_HEADING);
+
     if (!buttons.isEmpty()) {
         return buttons.get(0).getText().trim();
     }
@@ -90,20 +111,20 @@ public String isQuestionTextDisplayed(int number_items) {
 
 //Блок ответа отображается на экране
 public boolean isBlockAnswerTextDisplayed(int number_items) {
-    WebElement answerBlockTextDisplayed = driver.findElement(By.id("accordion__panel-"+number_items));
-    return answerBlockTextDisplayed.isDisplayed();
+    WebElement answerBlock = driver.findElement(panelByIndex(number_items));
+    return answerBlock.isDisplayed();
 }
 
 //Наличие видимого текста (не пустая строка) в блоке ответа
-public String isAnswerTextDisplayed(int number_items) {
+public String getAnswerText(int number_items) {
     clickAccordionItemButton(number_items);
-    By panel = By.id("accordion__panel-" + number_items);
+    By panel = panelByIndex(number_items);
     WebElement answer = new WebDriverWait(driver, Duration.ofSeconds(5))
             .until(ExpectedConditions.visibilityOfElementLocated(panel));
-    return answer.getText();//getText - возвращает только для видимых объектов
+    return answer.getText(); //getText - возвращает только для видимых объектов
 }
 // Получить количество вопросов в FAQ
-public int qetQuestionsSize() {
+public int getQuestionsSize() {
     ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight);");
     WebDriverWait w = new WebDriverWait(driver, Duration.ofSeconds(8));
     w.until(ExpectedConditions.presenceOfAllElementsLocatedBy(ACCORDION_ITEM));
